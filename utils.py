@@ -43,7 +43,6 @@ def extract_constants_from_world(world):
                 constants.add(arg.strip())
     return constants
 
-
 def un_normalized_world_probability(world, mln_rules):
     """
     Compute the probability of a given world according to the MLN rules.
@@ -60,7 +59,29 @@ def un_normalized_world_probability(world, mln_rules):
     
     return math.exp(exponent)
 
-
+def compute_partition_function(mln_rules, ground_atoms):
+    """
+    Compute the partition function Z by summing over all possible worlds.
+    Input:
+      mln_rules: list of MLNRule objects
+      ground_atoms: set of all ground atoms
+    Output:
+      Z: float
+    """
+    Z = 0.0
+    ground_atom_list = list(ground_atoms)
+    num_atoms = len(ground_atom_list)
+    
+    for i in range(2 ** num_atoms):
+        world = {}
+        for j in range(num_atoms):
+            atom = ground_atom_list[j]
+            world[atom] = (i & (1 << j)) != 0
+        
+        prob = un_normalized_world_probability(world, mln_rules)
+        Z += prob
+    
+    return Z
 
 class MLNRule:
     def __init__(self, weight, logic_function, name=""):
@@ -71,7 +92,6 @@ class MLNRule:
     def evaluate(self, world, constants):
         """Compute n_i(x): how many times the rule is true in this world."""
         return self.logic(world, constants)
-
 
 # Rule 1: Friends(x,y) => (Smokes(x) <=> Smokes(y))
 # Weight: 2.0
@@ -125,5 +145,9 @@ if __name__ == "__main__":
         "Smokes(Charlie)": True
     }
 
-    prob = un_normalized_world_probability(example_world, my_mln)
+    weight = un_normalized_world_probability(example_world, my_mln)
+    partition_function = compute_partition_function(my_mln, get_all_ground_atoms(['Anna', 'Bob', 'Charlie'], ['Smokes/1', 'Friends/2']))
+    prob = weight / partition_function
+
     print(f"Probability of the example world: {prob}")
+    print(f"Partition function Z: {partition_function}")

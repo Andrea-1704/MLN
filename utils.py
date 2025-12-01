@@ -1,6 +1,5 @@
 import itertools
 import math
-from Rules import MLNRule, rule_friends_logic, rule_smokes_logic
 
 def get_all_ground_atoms(constants, predicates):
     """
@@ -84,23 +83,54 @@ def compute_partition_function(mln_rules, ground_atoms):
     
     return Z
 
+def compute_world_scores_where_query_true(query_atom, constants, predicates, rules):
+    """
+    Returns a list of unnormalized scores (exponential weights) for all possible worlds 
+    where the specific 'query_atom' is TRUE.
+    """
+    # 1. Generate all possible ground atoms (the variables of our system)
+    # Example: ['Smokes(Anna)', 'Smokes(Bob)', 'Friends(Anna,Bob)', ...]
+    # Sorting ensures consistent ordering for the itertools product
+    all_ground_atoms = sorted(list(get_all_ground_atoms(constants, predicates)))
+    
+    scores = []
+    
+    # 2. Generate ALL possible worlds (Cartesian product of False/True)
+    for values in itertools.product([False, True], repeat=len(all_ground_atoms)):
+        
+        # Create the dictionary for the current world: { 'Smokes(Anna)': True, ... }
+        world = dict(zip(all_ground_atoms, values))
+        
+        # 3. FILTER: We only care about worlds where the Query is TRUE
+        # If the query is False in this world, we skip it (it does not contribute to the numerator).
+        if world.get(query_atom, False) is True:
+            
+            # 4. Compute unnormalized probability: exp(sum(weight * n_i))
+            # This function uses the logic defined in Equation (3) of the MLN paper
+            score = un_normalized_world_probability(world, rules)
+            scores.append(score)
+            
+    return scores
 
-if __name__ == "__main__":
-    my_mln = [
-        MLNRule(2.0, rule_friends_logic, "Friendships_smokes_correlation"),
-        MLNRule(0.5, rule_smokes_logic, "Smokes")
-    ]
-    example_world = {
-        "Friends(Anna,Bob)": True,
-        "Smokes(Anna)": True,
-        "Smokes(Bob)": False,
-        "Friends(Bob,Charlie)": True,
-        "Smokes(Charlie)": True
-    }
-
-    weight = un_normalized_world_probability(example_world, my_mln)
-    partition_function = compute_partition_function(my_mln, get_all_ground_atoms(['Anna', 'Bob', 'Charlie'], ['Smokes/1', 'Friends/2']))
-    prob = weight / partition_function
-
-    print(f"Probability of the example world: {prob}")
-    print(f"Partition function Z: {partition_function}")
+def compute_query_probability(query_atom, constants, predicates, rules):
+    """
+    Computes the marginal probability P(Query).
+    Formula: P(Q) = (Sum of weights of worlds where Q is True) / Z
+    """
+    # 1. Calculate the Numerator
+    # Sum of unnormalized scores for all worlds where the query is True
+    relevant_scores = compute_world_scores_where_query_true(query_atom, constants, predicates, rules)
+    numerator = sum(relevant_scores)
+    
+    # 2. Calculate the Denominator (Z - Partition Function)
+    # Sum of unnormalized scores for ALL possible worlds (both where Q is True and False)
+    all_ground_atoms = get_all_ground_atoms(constants, predicates)
+    
+    # Note: You must have the compute_partition_function defined in your utils
+    partition_function_Z = compute_partition_function(rules, all_ground_atoms)
+    
+    # 3. Final Probability calculation
+    if partition_function_Z == 0:
+        return 0.0
+        
+    return numerator / partition_function_Z

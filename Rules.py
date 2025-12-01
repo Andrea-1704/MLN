@@ -1,4 +1,3 @@
-
 class MLNRule:
     def __init__(self, weight, logic_function, name=""):
         self.weight = weight      # w_i

@@ -92,18 +92,14 @@ def compute_world_scores_where_query_true(query_atom, constants, predicates, rul
     # Example: ['Smokes(Anna)', 'Smokes(Bob)', 'Friends(Anna,Bob)', ...]
     # Sorting ensures consistent ordering for the itertools product
     all_ground_atoms = sorted(list(get_all_ground_atoms(constants, predicates)))
-    
     scores = []
-    
-    #Generate ALL possible worlds (Cartesian product of False/True)
+    #Generate ALL possible worlds (Cartesian product of False/True) 2^K
     for values in itertools.product([False, True], repeat=len(all_ground_atoms)):
         world = dict(zip(all_ground_atoms, values))
-        
         #We only care about worlds where the Query is TRUE
         if world.get(query_atom, False) is True:
             score = un_normalized_world_probability(world, rules)
             scores.append(score)
-            
     return scores
 
 def compute_marginal(query_atom, constants, predicates, rules):
@@ -114,13 +110,10 @@ def compute_marginal(query_atom, constants, predicates, rules):
     # Sum of unnormalized scores for all worlds where the query is True
     relevant_scores = compute_world_scores_where_query_true(query_atom, constants, predicates, rules)
     numerator = sum(relevant_scores)
-    
     # Sum of unnormalized scores for ALL possible worlds (both where Q is True and False)
     all_ground_atoms = get_all_ground_atoms(constants, predicates)
-    
     partition_function_Z = compute_partition_function(rules, all_ground_atoms)
     #This is a trick not to compute the Z for all the P(w).
-    
     if partition_function_Z == 0:
         return 0.0
         
@@ -131,22 +124,15 @@ def compute_joint_probability(query_atoms, constants, predicates, rules):
     Returns a list of unnormalized scores (exponential weights) for all possible worlds 
     where the specific 'query_atoms' are TRUE.
     """
-    #generate all possible ground atoms (the variables of our system)
-    # Example: ['Smokes(Anna)', 'Smokes(Bob)', 'Friends(Anna,Bob)', ...]
-    # Sorting ensures consistent ordering for the itertools product
     all_ground_atoms = sorted(list(get_all_ground_atoms(constants, predicates)))
-    
     scores = []
-    
     #Generate ALL possible worlds (Cartesian product of False/True)
     for values in itertools.product([False, True], repeat=len(all_ground_atoms)):
         world = dict(zip(all_ground_atoms, values))
-        
         #We only care about worlds where the Query is TRUE
         if all(world.get(atom, False) is True for atom in query_atoms):
             score = un_normalized_world_probability(world, rules)
             scores.append(score)
-            
     return scores
 
 def compute_conditional_probability(query, conditioning_facts, constants, predicates, rules):
@@ -158,6 +144,6 @@ def compute_conditional_probability(query, conditioning_facts, constants, predic
     denominator = sum(denominator_scores)
     if denominator == 0:
         return 0.0
-    
+    #here i can avoid to compute z
     return numerator / denominator
     

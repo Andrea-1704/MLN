@@ -16,6 +16,6 @@ if __name__ == "__main__":
 
     query = "Smokes(Anna)"
     conditioning_query = ["Friends(Anna,Bob)", "Smokes(Bob)"]
-    conditioning_query = ["Smokes(Anna)"]
+    #conditioning_query = ["Smokes(Anna)"]
     cond_prob = compute_conditional_probability(query, conditioning_query, my_constants, my_predicates, my_mln)
     print(f"P({query} | {conditioning_query}) = {cond_prob:.4f}")

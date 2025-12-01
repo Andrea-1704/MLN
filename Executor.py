@@ -1,5 +1,5 @@
 from Rules import MLNRule, rule_friends_logic, rule_smokes_logic
-from Utils import get_all_ground_atoms, un_normalized_world_probability, compute_partition_function, extract_constants_from_world, compute_query_probability
+from Utils import get_all_ground_atoms, un_normalized_world_probability, compute_partition_function, compute_marginal
 
 if __name__ == "__main__":
     my_mln = [
@@ -23,9 +23,10 @@ if __name__ == "__main__":
     target_query = "Smokes(Anna)"
     my_constants = ['Anna', 'Bob', 'Charlie']
     my_predicates = ['Smokes/1', 'Friends/2']
-    prob = compute_query_probability(target_query, my_constants, my_predicates, my_mln)
+    prob = compute_marginal(target_query, my_constants, my_predicates, my_mln)
     print(f"The probability that {target_query} is True is: {prob:.4f}")
 
     target_query = "Friends(Anna,Anna)"
-    prob = compute_query_probability(target_query, my_constants, my_predicates, my_mln)
+    prob = compute_marginal(target_query, my_constants, my_predicates, my_mln)
     print(f"The probability that {target_query} is True is: {prob:.4f}")
+

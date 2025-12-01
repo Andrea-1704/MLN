@@ -88,48 +88,39 @@ def compute_world_scores_where_query_true(query_atom, constants, predicates, rul
     Returns a list of unnormalized scores (exponential weights) for all possible worlds 
     where the specific 'query_atom' is TRUE.
     """
-    # 1. Generate all possible ground atoms (the variables of our system)
+    #generate all possible ground atoms (the variables of our system)
     # Example: ['Smokes(Anna)', 'Smokes(Bob)', 'Friends(Anna,Bob)', ...]
     # Sorting ensures consistent ordering for the itertools product
     all_ground_atoms = sorted(list(get_all_ground_atoms(constants, predicates)))
     
     scores = []
     
-    # 2. Generate ALL possible worlds (Cartesian product of False/True)
+    #Generate ALL possible worlds (Cartesian product of False/True)
     for values in itertools.product([False, True], repeat=len(all_ground_atoms)):
-        
-        # Create the dictionary for the current world: { 'Smokes(Anna)': True, ... }
         world = dict(zip(all_ground_atoms, values))
         
-        # 3. FILTER: We only care about worlds where the Query is TRUE
-        # If the query is False in this world, we skip it (it does not contribute to the numerator).
+        #We only care about worlds where the Query is TRUE
         if world.get(query_atom, False) is True:
-            
-            # 4. Compute unnormalized probability: exp(sum(weight * n_i))
-            # This function uses the logic defined in Equation (3) of the MLN paper
             score = un_normalized_world_probability(world, rules)
             scores.append(score)
             
     return scores
 
-def compute_query_probability(query_atom, constants, predicates, rules):
+def compute_marginal(query_atom, constants, predicates, rules):
     """
     Computes the marginal probability P(Query).
     Formula: P(Q) = (Sum of weights of worlds where Q is True) / Z
     """
-    # 1. Calculate the Numerator
     # Sum of unnormalized scores for all worlds where the query is True
     relevant_scores = compute_world_scores_where_query_true(query_atom, constants, predicates, rules)
     numerator = sum(relevant_scores)
     
-    # 2. Calculate the Denominator (Z - Partition Function)
     # Sum of unnormalized scores for ALL possible worlds (both where Q is True and False)
     all_ground_atoms = get_all_ground_atoms(constants, predicates)
     
-    # Note: You must have the compute_partition_function defined in your utils
     partition_function_Z = compute_partition_function(rules, all_ground_atoms)
+    #This is a trick not to compute the Z for all the P(w).
     
-    # 3. Final Probability calculation
     if partition_function_Z == 0:
         return 0.0
         

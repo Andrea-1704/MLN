@@ -1,5 +1,5 @@
 from Rules import MLNRule, rule_friends_logic, rule_smokes_logic
-from Utils import get_all_ground_atoms, un_normalized_world_probability, compute_partition_function, compute_marginal
+from Utils import get_all_ground_atoms, un_normalized_world_probability, compute_partition_function, compute_marginal, compute_conditional_probability
 
 if __name__ == "__main__":
     my_mln = [
@@ -30,3 +30,7 @@ if __name__ == "__main__":
     prob = compute_marginal(target_query, my_constants, my_predicates, my_mln)
     print(f"The probability that {target_query} is True is: {prob:.4f}")
 
+    query = "Smokes(Anna)"
+    conditioning_query = ["Friends(Anna,Bob)", "Smokes(Bob)"]
+    cond_prob = compute_conditional_probability(query, conditioning_query, my_constants, my_predicates, my_mln)
+    print(f"P({query} | {conditioning_query}) = {cond_prob:.4f}")

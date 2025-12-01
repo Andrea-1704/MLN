@@ -125,3 +125,39 @@ def compute_marginal(query_atom, constants, predicates, rules):
         return 0.0
         
     return numerator / partition_function_Z
+
+def compute_joint_probability(query_atoms, constants, predicates, rules):
+    """
+    Returns a list of unnormalized scores (exponential weights) for all possible worlds 
+    where the specific 'query_atoms' are TRUE.
+    """
+    #generate all possible ground atoms (the variables of our system)
+    # Example: ['Smokes(Anna)', 'Smokes(Bob)', 'Friends(Anna,Bob)', ...]
+    # Sorting ensures consistent ordering for the itertools product
+    all_ground_atoms = sorted(list(get_all_ground_atoms(constants, predicates)))
+    
+    scores = []
+    
+    #Generate ALL possible worlds (Cartesian product of False/True)
+    for values in itertools.product([False, True], repeat=len(all_ground_atoms)):
+        world = dict(zip(all_ground_atoms, values))
+        
+        #We only care about worlds where the Query is TRUE
+        if all(world.get(atom, False) is True for atom in query_atoms):
+            score = un_normalized_world_probability(world, rules)
+            scores.append(score)
+            
+    return scores
+
+def compute_conditional_probability(query, conditioning_facts, constants, predicates, rules):
+    all = conditioning_facts + [query]
+    numerator_scores = compute_joint_probability(all, constants, predicates, rules)
+    numerator = sum(numerator_scores)
+
+    denominator_scores = compute_joint_probability(conditioning_facts, constants, predicates, rules)
+    denominator = sum(denominator_scores)
+    if denominator == 0:
+        return 0.0
+    
+    return numerator / denominator
+    
